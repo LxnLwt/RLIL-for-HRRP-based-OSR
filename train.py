@@ -283,7 +283,7 @@ if __name__ == '__main__':
     parser.add_argument('--loss_f', type=str, default=['gcpl'])
     parser.add_argument('--optimizer', type=str, default='AdamW')
 
-    # 数据集1
+    # Scenario1
     parser.add_argument('--train_path1', type=str, default="data/traindata_1.csv")
     parser.add_argument('--val_path1', type=str, default="data/testdata_1.csv")
     parser.add_argument('--known_path1', type=str, default="data/testdata_1.csv")
@@ -292,7 +292,7 @@ if __name__ == '__main__':
     parser.add_argument('--roc_indices_json_path1', type=str, default="./json/roc_indices_1.json")
     parser.add_argument('--num_classes1', type=int, default=4)
 
-    # 数据集2
+    # Scenario2
     parser.add_argument('--train_path2', type=str, default="data/traindata_2.csv")
     parser.add_argument('--val_path2', type=str, default="data/testdata_2.csv")
     parser.add_argument('--known_path2', type=str, default="data/testdata_2.csv")
@@ -301,7 +301,7 @@ if __name__ == '__main__':
     parser.add_argument('--roc_indices_json_path2', type=str, default="./json/roc_indices_2.json")
     parser.add_argument('--num_classes2', type=int, default=4)
 
-    # 数据集3
+    # Scenario3
     parser.add_argument('--train_path3', type=str, default="data/traindata_sim_5kc_12.csv")
     parser.add_argument('--val_path3', type=str, default="data/testdata_sim_5kc_15.csv")
     parser.add_argument('--known_path3', type=str, default="data/testdata_sim_5kc_15.csv")
@@ -310,7 +310,7 @@ if __name__ == '__main__':
     parser.add_argument('--roc_indices_json_path3', type=str, default="./json/roc_indices_3.json")
     parser.add_argument('--num_classes3', type=int, default=5)
 
-    # 数据集4
+    # Scenario4
     parser.add_argument('--train_path4', type=str, default="data/traindata_sim_6kc_12.csv")
     parser.add_argument('--val_path4', type=str, default="data/testdata_sim_6kc_27.csv")
     parser.add_argument('--known_path4', type=str, default="data/testdata_sim_6kc_27.csv")
