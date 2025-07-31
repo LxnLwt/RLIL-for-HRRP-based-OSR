@@ -18,19 +18,16 @@ class gcpl_loss(torch.nn.Module):
     def __init_weight(self):
         nn.init.kaiming_normal_(self.centers)
 
-    def forward(self, x, labels=None, para_lambda=0):
+    def forward(self, x, labels=None):
+        # norms = torch.norm(x, dim=1)
         features_square = torch.sum(torch.pow(x, 2), 1, keepdim=True)
         centers_square = torch.sum(torch.pow(self.centers, 2), 0, keepdim=True)
         features_into_centers = 2 * torch.matmul(x, (self.centers))
         dist = features_square + centers_square - features_into_centers           # 样本到原型的距离
-
-        centers_mean = torch.mean(self.centers, dim=1)                            # 原型中心，Tensor:(16,)
-        centers_mean = centers_mean.unsqueeze(1)                                  # 原型中心，Tensor:(16, 1)
-        w_lmcl = self.centers - centers_mean                                      # 中心向量 Tensor:(16, 4)
+        # norms = torch.norm(dist, dim=1)
 
         centers = self.centers.transpose(0, 1)
         distance = -dist
-        weights = w_lmcl.transpose(0, 1)
 
         if labels is None:
             return {'logits': distance,
@@ -39,34 +36,10 @@ class gcpl_loss(torch.nn.Module):
         loss_d = self.loss_base(distance, labels)
         loss_reg = regularization(x, centers, labels)
 
-        n = labels.shape[0]  # batch
-        similarity_matrix = F.cosine_similarity(x.unsqueeze(1), weights.unsqueeze(0), dim=2)
-        similarity_matrix = torch.exp(similarity_matrix/0.2)
-        # 根据label选择分子, 使用 gather 方法从每行中获取 label 对应位置的元素作为分子
-        fenzi = similarity_matrix.gather(1, labels.view(-1, 1))  # (32, 1) 每行从 label 指定的列中取值作为分子
-        # 生成掩码，排除label对应的位置
-        mask = torch.ones_like(similarity_matrix, dtype=torch.bool)  # 初始化全True掩码
-        mask.scatter_(1, labels.view(-1, 1), False)  # 在每行将 label 对应的位置设置为 False
-        # 使用掩码选择非label位置的数据，并求和
-        fenmu = (similarity_matrix * mask).sum(dim=1, keepdim=True)  # 按行求和，排除label对应位置的元素
-        result = fenzi / (fenmu + fenzi)
-        '''
-        由于result中，存在0数值，那么在求-log的时候会出错。这时候，我们就将result里面为0的地方
-        全部加上1，然后再去求loss矩阵的值，那么-log1 = 0 ，就是我们想要的。
-        '''
-        mask_ = torch.eye(n, 1)
-        if similarity_matrix.device != mask_.device:
-            mask_ = mask_.to(similarity_matrix.device)  # 确保y在与x相同的设备上
-        result = result + mask_
-
-        log_result = -torch.log(result)
-        loss_sur = torch.sum(log_result)/n
-
-        loss = loss_d + 0.001 * loss_reg.item() + para_lambda * loss_sur
+        loss = loss_d + 0.001 * loss_reg.item()
 
         return {'logits': distance,
                 'loss': loss}
-
 
 def regularization(features, centers, labels):
     distance = (features - torch.t(centers.transpose(0, 1))[labels])
