@@ -277,7 +277,6 @@ if __name__ == '__main__':
     parser.add_argument('--T_max', type=int, default=20)
     parser.add_argument('--logs_path', type=str, default="./log/9_12")
     parser.add_argument('--save_path', type=str, default='./weight/')
-    # parser.add_argument('--backbone', type=str, default=['fsbn', 'resnet18', 'alexnet'])
     parser.add_argument('--backbone', type=str, default=['alexnet'])
     # parser.add_argument('--loss_f', type=str, default=['kpf', 'cac', 'rpl', 'arpl', 'slcpl', 'ring', 'softmax'])
     parser.add_argument('--loss_f', type=str, default=['gcpl'])
