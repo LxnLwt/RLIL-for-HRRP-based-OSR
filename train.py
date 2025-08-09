@@ -90,8 +90,8 @@ def main(args):
                         print("using {} HRRP datas for training, {} HRRP data for validation.".format(train_size, val_size))
                         if backbone == 'alexnet':
                             model = AlexNet(loss_f=loss_f, num_classes=num_classes).to(device)  # 修改模型
-                        if backbone == 'resnet18':
-                            model = resnet18(loss_f=loss_f, num_classes=num_classes).to(device)  # 修改模型
+                        if backbone == 'resnet34':
+                            model = resnet34(loss_f=loss_f, num_classes=num_classes).to(device)  # 修改模型
                         if backbone == 'fsbn':
                             layer_parameter_list = \
                                 [
