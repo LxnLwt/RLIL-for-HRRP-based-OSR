@@ -37,12 +37,6 @@ class BasicBlock(nn.Module):
 
 
 class Bottleneck(nn.Module):
-    """
-    注意：原论文中，在虚线残差结构的主分支上，第一个1x1卷积层的步距是2，第二个3x3卷积层步距是1。
-    但在pytorch官方实现过程中是第一个1x1卷积层的步距是1，第二个3x3卷积层步距是2，
-    这么做的好处是能够在top1上提升大概0.5%的准确率。
-    可参考Resnet v1.5 https://ngc.nvidia.com/catalog/model-scripts/nvidia:resnet_50_v1_5_for_pytorch
-    """
     expansion = 4
 
     def __init__(self, in_channel, out_channel, stride=1, downsample=None,
@@ -301,6 +295,9 @@ class AlexNet(nn.Module):
         if loss_f == 'arpl':
             self.layer3 = AlexNet_output(input=64, output=embd_dim)
             self.loss = ARPLoss(n_classes=num_classes, feat_dim=embd_dim)
+        if loss_f == 'logitnorm':
+            self.layer3 = AlexNet_output(input=64, output=embd_dim)
+            self.loss = LogitNormLoss(t=0.05)
         if loss_f == 'slcpl':
             self.layer3 = AlexNet_output(input=64, output=embd_dim)
             self.loss = SLCPLoss(n_classes=num_classes, feat_dim=embd_dim)
@@ -308,6 +305,19 @@ class AlexNet(nn.Module):
             self.layer3 = AlexNet_output(input=64, output=embd_dim)
             self.fc1 = nn.Linear(embd_dim, num_classes)
             self.loss = RingLoss()
+        if loss_f == 'ecapl':
+            self.layer3 = AlexNet_output(input=64, output=embd_dim)
+            opt = {
+                'weight_pl': 0.1,
+                'weight_s': 0.05,
+                'weight_d': 0.2,
+                'weight_c': 0.1,
+                'weight_pl2': 0.05,
+                'temp': 0.5,
+                'num_classes': num_classes,
+                'feat_dim': 12
+            }
+            self.loss = LPFLossPlus(**opt)
 
     def forward(self, X, labels=None):
         x = self.layer1(X)
