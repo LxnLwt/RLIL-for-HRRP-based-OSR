@@ -13,8 +13,8 @@ if __name__ == "__main__":
     np.random.seed(7)
     # model_weight_path1 = "weight/alexnet_gcpl_data4_l2×0.05_mixup×0_pwc×0.pth"
     model_weight_path1 = "weight/alexnet_gcpl_data4_l2×0_mixup×0_pwc×0.pth"
-    data_path = "data/9.12/testdata_sim_6kc_27.csv"
-    unknown_path = "data/9.12/unknown_sim_6kc_27.csv"
+    data_path = "data/testdata_sim_6kc_27.csv"
+    unknown_path = "data/unknown_sim_6kc_27.csv"
 
     # 加载网络
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -200,4 +200,5 @@ if __name__ == "__main__":
     os.makedirs(output_dir, exist_ok=True)
     plt.savefig('./pictures/Figure5c.pdf', bbox_inches='tight')
     # 显示图表
+
     plt.show()
