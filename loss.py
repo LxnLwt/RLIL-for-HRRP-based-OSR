@@ -244,3 +244,58 @@ class LogitNormLoss(nn.Module):
                 'loss': loss}
 
 
+class LPFLossPlus(nn.CrossEntropyLoss):
+    def __init__(self, **options):
+        super(LPFLossPlus, self).__init__()
+        self.weight_pl = options['weight_pl']
+        self.weight_s = options['weight_s']
+        self.weight_d = options['weight_d']
+        self.weight_c = options['weight_c']
+        self.weight_pl2 = options['weight_pl2']
+        self.temp = options['temp']
+        self.Dist = Dist(num_classes=options['num_classes'], feat_dim=options['feat_dim'])
+        self.points = self.Dist.centers
+        self.radius = nn.Parameter(torch.Tensor(1))
+        self.radius.data.fill_(0)
+        self.margin_loss = nn.MarginRankingLoss(margin=1.0)
+        self.margin_loss2 = nn.MarginRankingLoss(margin=0.)
+
+    def forward(self, x, labels=None):
+        dist_dot_p = self.Dist(x, center=self.points, metric='dot')
+        dist_l2_p = self.Dist(x, center=self.points)
+        dist = dist_l2_p - dist_dot_p
+
+        logits = -dist
+        if labels is None:
+            return {'logits': logits,
+                    'features': x}
+
+        logits = F.softmax(-dist, dim=1)
+        loss = F.cross_entropy(-dist / self.temp, labels)
+
+        center_batch = self.points[labels, :]
+        _dis_known = (x - center_batch).pow(2).mean(1)
+        target = torch.ones(_dis_known.size()).cuda()
+        loss_r = self.margin_loss(self.radius, _dis_known, target)
+
+        Space_center = torch.mean(self.points, dim=0)
+        loss_s = torch.norm(Space_center)
+
+        _dis_c = torch.mean(torch.norm(self.points, dim=1))
+        loss_c = torch.mean((torch.norm(self.points, dim=1) - _dis_c).pow(2))
+
+        _dis_dot = torch.sum(torch.mul(x, center_batch), dim=1) / (torch.norm(x, dim=1) * torch.norm(center_batch, dim=1))
+        loss_d = torch.mean(_dis_dot)
+
+        _dis_x = torch.norm(x, dim=1)
+        _dis_center_batch = torch.norm(center_batch, dim=1)
+        loss_r2 = self.margin_loss2(_dis_center_batch, _dis_x, target)
+
+        loss = loss + self.weight_pl * loss_r\
+                    + self.weight_pl2 * loss_r2\
+                    + self.weight_s * loss_s - self.weight_d * (loss_d-1)\
+                    + self.weight_c * loss_c\
+
+        return {'logits': logits,
+                'loss': loss}
+
