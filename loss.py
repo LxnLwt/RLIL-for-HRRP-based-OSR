@@ -228,28 +228,19 @@ class CACLoss(nn.CrossEntropyLoss):
                 'loss': loss}
 
 
-class RPLoss(nn.CrossEntropyLoss):
-    def __init__(self, n_classes=4, feat_dim=12):
-        super(RPLoss, self).__init__()
-        self.weight_pl = float(0.1)
-        self.temp = 1.
-        self.Dist = Dist(num_classes=n_classes, feat_dim=feat_dim, num_centers=1)
-        self.radius = 1
+class LogitNormLoss(nn.Module):
 
-        self.radius = nn.Parameter(torch.Tensor(self.radius))
-        self.radius.data.fill_(0)
+    def __init__(self, t=1.0):
+        super(LogitNormLoss, self).__init__()
+        self.t = t
 
-    def forward(self, x, labels=None):
-        dist = self.Dist(x)
-        logits = F.softmax(dist, dim=1)
-        if labels is None:
-            return {'logits': logits,
-                    'features': x}
-        loss = F.cross_entropy(dist / self.temp, labels)
-        center_batch = self.Dist.centers[labels, :]
-        _dis = (x - center_batch).pow(2).mean(1)
-        loss_r = F.mse_loss(_dis, self.radius)
-        loss = loss + self.weight_pl * loss_r
-
-        return {'logits': logits,
+    def forward(self, x, target):
+        norms = torch.norm(x, p=2, dim=-1, keepdim=True) + 1e-7
+        logit_norm = torch.div(x, norms) / self.t
+        if target is None:
+            return {'logits': logit_norm}
+        loss = F.cross_entropy(logit_norm, target)
+        return {'logits': logit_norm,
                 'loss': loss}
+
+
