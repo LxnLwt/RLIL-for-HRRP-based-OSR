@@ -12,45 +12,44 @@ os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
 
 if __name__ == "__main__":
     np.random.seed(7)
-    # model_weight_path1 = "weight/alexnet_gcpl_data4_l2×0.05_mixup×0_pwc×0.pth"
-    # # model_weight_path1 = "weight/alexnet_gcpl_data4_l2×0_mixup×0_pwc×0.pth"
-    # data_path = "data/9.12/testdata_sim_6kc_27.csv"
-    # unknown_path = "data/9.12/unknown_sim_6kc_27.csv"
-    #
-    # # 加载网络
-    # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-    # model = AlexNet(loss_f='gcpl', num_classes=6).to(device)
-    # model.load_state_dict(torch.load(model_weight_path1, map_location=device))
-    #
-    # # 读取测试数据
-    # df1 = pd.read_csv(data_path)                             # 读取库外测试数据
-    # x1 = df1.iloc[:, :-1].values
-    # y1 = df1.iloc[:, -1].values
-    # x1 = x_norm(x1)
-    # df2 = pd.read_csv(unknown_path)                  # 读取库内测试数据
-    # x2 = df2.iloc[:, :-1].values
-    # y2 = df2.iloc[:, -1].values
-    # x2 = x_norm(x2)
-    # x = np.concatenate((x1, x2), axis=0)
-    # y = np.concatenate((y1, y2), axis=0)
-    #
-    # logits_norm = []
-    # for i in range(len(x1)):
-    #     pred, pro_logits, logits = predict_s(x1[i], model, device)
-    #     norms = torch.norm(logits, dim=1)
-    #     logits_norm.append(norms.item())
-    #
-    # for i in range(len(x2)):
-    #     pred, pro_logits, logits = predict_s(x2[i], model, device)
-    #     norms = torch.norm(logits, dim=1)
-    #     logits_norm.append(norms.item())
-    #
-    # logits_norm_known = np.array(logits_norm)
-    # mean_logits_norm = np.mean(logits_norm_known)
-    # print("norm:", mean_logits_norm)
-    #
-    # np.savetxt('./txt/histplot/norm_logits_regularization.txt', logits_norm_known)
-    # # np.savetxt('./txt/histplot/norm_logits.txt', logits_norm_known)
+    model_weight_path1 = "weight/alexnet_gcpl_data4_l2×0.05_mixup×0_pwc×0.pth"
+    data_path = "data/testdata_sim_6kc_27.csv"
+    unknown_path = "data/unknown_sim_6kc_27.csv"
+    
+    # 加载网络
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model = AlexNet(loss_f='gcpl', num_classes=6).to(device)
+    model.load_state_dict(torch.load(model_weight_path1, map_location=device))
+    
+    # 读取测试数据
+    df1 = pd.read_csv(data_path)                             # 读取库外测试数据
+    x1 = df1.iloc[:, :-1].values
+    y1 = df1.iloc[:, -1].values
+    x1 = x_norm(x1)
+    df2 = pd.read_csv(unknown_path)                  # 读取库内测试数据
+    x2 = df2.iloc[:, :-1].values
+    y2 = df2.iloc[:, -1].values
+    x2 = x_norm(x2)
+    x = np.concatenate((x1, x2), axis=0)
+    y = np.concatenate((y1, y2), axis=0)
+    
+    logits_norm = []
+    for i in range(len(x1)):
+        pred, pro_logits, logits = predict_s(x1[i], model, device)
+        norms = torch.norm(logits, dim=1)
+        logits_norm.append(norms.item())
+    
+    for i in range(len(x2)):
+        pred, pro_logits, logits = predict_s(x2[i], model, device)
+        norms = torch.norm(logits, dim=1)
+        logits_norm.append(norms.item())
+    
+    logits_norm_known = np.array(logits_norm)
+    mean_logits_norm = np.mean(logits_norm_known)
+    print("norm:", mean_logits_norm)
+    
+    np.savetxt('./txt/histplot/norm_logits_regularization.txt', logits_norm_known)
+    # np.savetxt('./txt/histplot/norm_logits.txt', logits_norm_known)
 
     # 加载数据
     norm_logits_regularization = np.loadtxt('./txt/histplot/norm_logits_regularization.txt')
@@ -164,4 +163,5 @@ if __name__ == "__main__":
 
     # 显示图表
     plt.show()
+
 
