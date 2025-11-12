@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import math
 import numpy as np
 from FSFE import OS_block
-from loss import gcpl_loss, KPFLoss, ARPLoss, SLCPLoss, RingLoss, RPLoss, CACLoss
+from loss import gcpl_loss, KPFLoss, ARPLoss, SLCPLoss, RingLoss, RPLoss, CACLoss, LPFLossPlus, LogitNormLoss
 from DWT_layer import DWT_1D, IDWT_1D
 
 
@@ -178,6 +178,9 @@ class FSBN(nn.Module):
         if loss_f == 'arpl':
             self.hidden = nn.Linear(out_put_channel_numebr, embd_dim)
             self.loss = ARPLoss(n_classes=n_class, feat_dim=embd_dim)
+        if loss_f == 'logitnorm':
+            self.fc = nn.Linear(512 * block.expansion, num_classes)
+            self.loss = LogitNormLoss(t=0.05)
         if loss_f == 'slcpl':
             self.hidden = nn.Linear(out_put_channel_numebr, embd_dim)
             self.loss = SLCPLoss(n_classes=n_class, feat_dim=embd_dim)
@@ -185,6 +188,19 @@ class FSBN(nn.Module):
             self.hidden = nn.Linear(out_put_channel_numebr, embd_dim)
             self.fc1 = nn.Linear(embd_dim, n_class)
             self.loss = RingLoss()
+        if loss_f == 'ecapl':
+            self.hidden = nn.Linear(out_put_channel_numebr, embd_dim)
+            opt = {
+                'weight_pl': 0.1,
+                'weight_s': 0.05,
+                'weight_d': 0.2,
+                'weight_c': 0.1,
+                'weight_pl2': 0.05,
+                'temp': 0.5,
+                'num_classes': num_classes,
+                'feat_dim': 12
+            }
+            self.loss = LPFLossPlus(**opt)
 
     def forward(self, X, labels=None, para_lambda=None):
         temp = self.net_1(X)
@@ -205,10 +221,6 @@ class FSBN(nn.Module):
         if self.loss_f == 'ring':
             y = self.fc1(x)
             out = self.loss(x, y, labels)
-            return out
-
-        if self.loss_f == 'pbo':
-            out = self.loss(x, labels, para_lambda)
             return out
 
         out = self.loss(x, labels)
