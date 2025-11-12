@@ -318,7 +318,7 @@ if __name__ == '__main__':
     parser.add_argument('--roc_indices_json_path4', type=str, default="./json/roc_indices_4.json")
     parser.add_argument('--num_classes4', type=int, default=6)
 
-    parser.add_argument('--data_number', type=float, default=[3, 4])
+    parser.add_argument('--data_number', type=float, default=[1, 2, 3, 4])
     parser.add_argument('--weight_decay', type=float, default=[0.05])
     parser.add_argument('--para_lambda_lil', type=float, default=[0])
     # parser.add_argument('--para_lambda_lil', type=float, default=[0, 0.1])
