@@ -14,12 +14,12 @@ if __name__ == "__main__":
     model = AlexNet(loss_f='gcpl', num_classes=5).to(device)
     model.load_state_dict(torch.load(model_weight_path1, map_location=device))
 
-    # 1. 读取你刚刚生成的噪声数据
+    # 1. 读取噪声数据
     df_noise = pd.read_csv('data/9.12/unknown_noise_1to20.csv', header=None)
     x_noise = df_noise.iloc[:, :-1].values  # (N, L)
     var_arr = df_noise.iloc[:, -1].values  # (N,) 方差在最后一列
 
-    # 2. 推理，得到 cross-entropy（保持和你之前的推理代码一致）
+    # 2. 推理，得到 cross-entropy
     model.eval()
     x_noise_tensor = torch.from_numpy(x_noise).float().to(device)
     if x_noise_tensor.ndim != 3:
@@ -46,5 +46,6 @@ if __name__ == "__main__":
     # plt.savefig('./pictures/unknown_noise_variance_heatmap.png', bbox_inches='tight')
     plt.savefig('./pictures/Figure6b.pdf', bbox_inches='tight')
     plt.show()
+
 
 
