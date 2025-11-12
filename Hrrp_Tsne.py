@@ -9,9 +9,9 @@ from utils.tSNE2D import *
 if __name__ == "__main__":
     np.random.seed(7)
     model_weight_path1 = "weight/alexnet_ring_data2_l2×0_mixup×0_pwc×0.pth"
-    data_path = "data/9.12/testdata_sim_5kc.csv"
+    data_path = "data/testdata_sim_5kc.csv"
     json_label_path = "json/tsne_indices_2.json"
-    unknown_targets_path = "data/9.12/unknown_sim_5kc.csv"
+    unknown_targets_path = "data/unknown_sim_5kc.csv"
 
     # 加载网络
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -46,4 +46,5 @@ if __name__ == "__main__":
     # 绘图
     tSNE = tSNE()
     tSNE.visual_dataset(T_array1, y, f'RowData\n')
+
 
