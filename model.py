@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch
-from loss import gcpl_loss, KPFLoss, ARPLoss, SLCPLoss, RingLoss, RPLoss, CACLoss
+from loss import gcpl_loss, KPFLoss, ARPLoss, SLCPLoss, RingLoss, RPLoss, CACLoss, LPFLossPlus, LogitNormLoss
 import torch.nn.functional as F
 
 
@@ -138,6 +138,9 @@ class ResNet(nn.Module):
         if loss_f == 'arpl':
             self.fc = nn.Linear(512 * block.expansion, 12)
             self.loss = ARPLoss(n_classes=num_classes, feat_dim=12)
+        if loss_f == 'logitnorm':
+            self.fc = nn.Linear(512 * block.expansion, num_classes)
+            self.loss = LogitNormLoss(t=0.05)
         if loss_f == 'slcpl':
             self.fc = nn.Linear(512 * block.expansion, 12)
             self.loss = SLCPLoss(n_classes=num_classes, feat_dim=12)
@@ -145,6 +148,19 @@ class ResNet(nn.Module):
             self.fc = nn.Linear(512 * block.expansion, 12)
             self.fc1 = nn.Linear(12, num_classes)
             self.loss = RingLoss()
+        if loss_f == 'ecapl':
+            self.fc = nn.Linear(512 * block.expansion, 12)
+            opt = {
+                'weight_pl': 0.1,
+                'weight_s': 0.05,
+                'weight_d': 0.2,
+                'weight_c': 0.1,
+                'weight_pl2': 0.05,
+                'temp': 0.5,
+                'num_classes': num_classes,
+                'feat_dim': 12
+            }
+            self.loss = LPFLossPlus(**opt)
 
     @staticmethod
     def weigth_init(m):
