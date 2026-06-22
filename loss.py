@@ -299,3 +299,90 @@ class LPFLossPlus(nn.CrossEntropyLoss):
         return {'logits': logits,
                 'loss': loss}
 
+class ELogitNormLoss(nn.Module):
+    """
+    ELogitNorm Loss.
+
+    This implementation follows the official formulation:
+
+        scale_i = mean_j |f_i,j - f_i,c*| / ||w_j - w_c*||_2
+        scaled_logits = logits / scale
+        loss = CE(scaled_logits, target)
+
+    Args:
+        eps: numerical stability term.
+        detach_scale: whether to stop gradients through the scaling factor.
+    """
+
+    def __init__(self, eps=1e-7, detach_scale=False):
+        super(ELogitNormLoss, self).__init__()
+        self.eps = eps
+        self.detach_scale = detach_scale
+
+    def forward(self, x, target, classifier_weight):
+        """
+        Args:
+            x: logits, shape [N, C]
+            target: labels, shape [N]
+            classifier_weight: final FC weight, shape [C, D]
+
+        Returns:
+            dict containing scaled logits and loss.
+        """
+
+        logits = x
+        fc_weight = classifier_weight
+
+        # -------------------------------------------------
+        # 1. Pairwise classifier-weight differences
+        #    w_diff[c, j] = w_c - w_j
+        # -------------------------------------------------
+        w_diff = fc_weight.unsqueeze(1) - fc_weight.unsqueeze(0)  # [C, C, D]
+        denom = torch.norm(w_diff, p=2, dim=2)  # [C, C]
+
+        # Avoid zero denominator on the diagonal
+        eye = torch.eye(
+            denom.size(0),
+            device=denom.device,
+            dtype=denom.dtype
+        )
+        denom = denom + eye
+
+        # -------------------------------------------------
+        # 2. Predicted class c*
+        # -------------------------------------------------
+        values, pred_idx = logits.max(dim=1)  # [N]
+
+        # -------------------------------------------------
+        # 3. Logit gaps |f_j - f_c*|
+        # -------------------------------------------------
+        gaps = (logits - values.unsqueeze(1)).abs()  # [N, C]
+
+        # -------------------------------------------------
+        # 4. Instance-wise boundary-distance scale
+        #    scale_i = mean_j gaps_ij / ||w_c* - w_j||
+        # -------------------------------------------------
+        scale = gaps / (denom[pred_idx] + self.eps)  # [N, C]
+        scale = scale.mean(dim=1, keepdim=True)      # [N, 1]
+        scale = scale.clamp_min(self.eps)
+
+        if self.detach_scale:
+            scale = scale.detach()
+
+        # -------------------------------------------------
+        # 5. ELogitNorm scaled logits
+        # -------------------------------------------------
+        scaled_logits = logits / scale
+
+        if target is None:
+            return {
+                'logits': scaled_logits
+            }
+
+        loss = F.cross_entropy(scaled_logits, target)
+
+        return {
+            'logits': scaled_logits,
+            'loss': loss
+        }
+
