@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch
-from loss import gcpl_loss, KPFLoss, ARPLoss, SLCPLoss, RingLoss, RPLoss, CACLoss, LPFLossPlus, LogitNormLoss
+from loss import gcpl_loss, KPFLoss, ARPLoss, SLCPLoss, RingLoss, RPLoss, CACLoss, LPFLossPlus, LogitNormLoss, ELogitNormLoss
 import torch.nn.functional as F
 
 
@@ -318,6 +318,9 @@ class AlexNet(nn.Module):
                 'feat_dim': 12
             }
             self.loss = LPFLossPlus(**opt)
+        if loss_f == 'elnl':
+            self.layer3 = nn.Linear(64, num_classes)
+            self.loss = ELogitNormLoss(eps=1e-7, detach_scale=False)
 
     def forward(self, X, labels=None):
         x = self.layer1(X)
@@ -334,6 +337,10 @@ class AlexNet(nn.Module):
         if self.loss_f == 'ring':
             y = self.fc1(x)
             out = self.loss(x, y, labels)
+            return out
+
+        if self.loss_f == 'elnl':
+            out = self.loss(x=x, target=labels, classifier_weight=self.layer3.weight)
             return out
 
         out = self.loss(x, labels)
